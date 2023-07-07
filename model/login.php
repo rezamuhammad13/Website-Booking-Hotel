@@ -1,38 +1,25 @@
 <?php
 
-include_once("../controller/koneksi.php");
+include('../../controller/koneksi.php');
+function clean($string)
+{
+  return str_replace("'", '', $string);
+}
 
-$email = mysqli_real_escape_string($conn, $_POST["email"]);
-$password = mysqli_real_escape_string($conn, md5($_POST["password"]));
+$username = $conn->real_escape_string($_POST['username']);
+$username = clean($username);
+$password = $conn->real_escape_string($_POST['password']);
+$password = clean($password);
+$pass = md5($password);
 
-$query_sql = "SELECT * FROM user_data
-                           WHERE user_email = '$email' && password = '$password'";
+$query = mysqli_query($conn, "SELECT * FROM admin WHERE username='$username' AND password='$pass'");
 
-$result = mysqli_query($conn, $query_sql);
-
-if (mysqli_num_rows($result) > 0) {
-  while ($data = mysqli_fetch_array($result)) {
-    $_SESSION['user_id'] = $data['user_id'];
-    $nama_user = $data['nama'];
-  }
-  $_SESSION['sukses'] = "<div class='alert alert-success' role='alert'>
-    Selamat datang $nama_user
-  </div>";
-  if (!empty($_POST["remember"])) {
-    setcookie("email", $_POST["email"], time() + 3600);
-    setcookie("password", $_POST["password"], time() + 3600);
-  } else {
-    setcookie("email", "");
-    setcookie("password", "");
-  }
-  if(isset($_SESSION['percobaan_gagal'])){
-    unset($_SESSION['percobaan_gagal']);
-  }
-  header("Location: ../index.php");
+if (mysqli_num_rows($query) == 1) {
+  $user = mysqli_fetch_array($query);
+  $_SESSION['admin_name'] = $user['nama'];
+  header('Location: ../index.php');
 } else {
-  $_SESSION['gagal'] = "<div class='alert alert-danger' role='alert'>
-        email atau password yang anda masukkan salah
-      </div>";
-  $_SESSION['percobaan_gagal'] +=1;
-  header("Location: ../index.php");
+  $_SESSION['login_gagal'] = "<div class='alert alert-danger' role='alert'>
+  username / password anda salah </div>";
+  header('Location: ../../index.php');
 }
